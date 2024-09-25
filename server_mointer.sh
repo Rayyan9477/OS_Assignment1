@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Define the log file path
 LOG_FILE="server_monitor.log"
 
 # Function to check disk usage
