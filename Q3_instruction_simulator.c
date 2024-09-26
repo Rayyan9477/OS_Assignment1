@@ -12,7 +12,6 @@ enum OpCode {
 // Memory size and register count
 #define MEMORY_SIZE 10
 #define REGISTER_COUNT 2
-
 // Structure to represent an instruction
 typedef struct {
     enum OpCode op; // Operation code
