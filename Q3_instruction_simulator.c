@@ -1,120 +1,134 @@
 #include <stdio.h>
-// Constants
-enum OpCode {
-    LOAD,    
-    STORE,   
-    ADD,    
-    SUB,  
-    HALT     
+
+// Enum to represent different opcodes
+enum OperationCode {
+    OP_LOAD,    
+    OP_STORE,   
+    OP_ADD,    
+    OP_SUB,  
+    OP_HALT     
 };
 
-#define MEMORY_SIZE 10
-#define REGISTER_COUNT 2
+// Memory size and register count
+#define MEM_CAPACITY 10
+#define REG_COUNT 2
 
+// Structure to represent an instruction
 typedef struct {
-    enum OpCode op; 
-    int operand1;   
-    int operand2;   
-} Instruction;
+    enum OperationCode operation; 
+    int firstOperand;   
+    int secondOperand;   
+} Command;
 
-int memory[MEMORY_SIZE] = {0};  
-int registers[REGISTER_COUNT] = {0}; 
-int program_counter = 0; 
+// Global variables for memory, registers, and program counter
+int memory[MEM_CAPACITY] = {0};  // Memory array
+int registers[REG_COUNT] = {0};  // Register array
+int program_counter = 0; // Program Counter
 
-void run_program(Instruction program[], int program_size);
-void sample_program1();
-void sample_program2();
+// Forward declarations
+void perform_load(int firstOperand, int secondOperand);
+void perform_store(int firstOperand, int secondOperand);
+void perform_add(int firstOperand, int secondOperand);
+void perform_sub(int firstOperand, int secondOperand);
+void perform_halt();
+void execute_program(Command program[], int program_size);
+void example_program1();
+void example_program2();
 
 int main() {
-    sample_program1();
-    sample_program2();
+    example_program1();
+    example_program2();
 
     return 0;
 }
 
-void run_program(Instruction program[], int program_size) {
+// Function implementations
+void perform_load(int firstOperand, int secondOperand) {
+    registers[firstOperand] = memory[secondOperand];
+    printf("LOAD: R%d = memory[%d] -> %d\n", firstOperand, secondOperand, registers[firstOperand]);
+}
+
+void perform_store(int firstOperand, int secondOperand) {
+    memory[firstOperand] = registers[secondOperand];
+    printf("STORE: memory[%d] = R%d -> %d\n", firstOperand, secondOperand, memory[firstOperand]);
+}
+
+void perform_add(int firstOperand, int secondOperand) {
+    registers[firstOperand] += registers[secondOperand];
+    printf("ADD: R%d = R%d + R%d -> %d\n", firstOperand, firstOperand, secondOperand, registers[firstOperand]);
+}
+
+void perform_sub(int firstOperand, int secondOperand) {
+    registers[firstOperand] -= registers[secondOperand];
+    printf("SUB: R%d = R%d - R%d -> %d\n", firstOperand, firstOperand, secondOperand, registers[firstOperand]);
+}
+
+void perform_halt() {
+    program_counter = -1; // Set program counter to an invalid value to stop execution
+    printf("HALT\n");
+}
+
+void execute_program(Command program[], int program_size) {
     int running = 1;
 
     while (running && program_counter < program_size) {
-        Instruction instr = program[program_counter];
-
-        printf("Before execution of instruction at PC = %d\n", program_counter);
-        printf("Registers: R0 = %d, R1 = %d\n", registers[0], registers[1]);
-        printf("Memory: ");
-        for (int i = 0; i < MEMORY_SIZE; i++) {
-            printf("%d ", memory[i]);
-        }
-        printf("\n");
-
-        switch (instr.op) {
-            case LOAD:
-                registers[instr.operand1] = memory[instr.operand2];
-                printf("LOAD: R%d = memory[%d] = %d\n", instr.operand1, instr.operand2, registers[instr.operand1]);
+        Command current_command = program[program_counter];
+        switch (current_command.operation) {
+            case OP_LOAD:
+                perform_load(current_command.firstOperand, current_command.secondOperand);
                 break;
-            case STORE:
-                memory[instr.operand1] = registers[instr.operand2];
-                printf("STORE: memory[%d] = R%d = %d\n", instr.operand1, instr.operand2, memory[instr.operand1]);
+            case OP_STORE:
+                perform_store(current_command.firstOperand, current_command.secondOperand);
                 break;
-            case ADD:
-                registers[instr.operand1] += registers[instr.operand2];
-                printf("ADD: R%d = R%d + R%d = %d\n", instr.operand1, instr.operand1, instr.operand2, registers[instr.operand1]);
+            case OP_ADD:
+                perform_add(current_command.firstOperand, current_command.secondOperand);
                 break;
-            case SUB:
-                registers[instr.operand1] -= registers[instr.operand2];
-                printf("SUB: R%d = R%d - R%d = %d\n", instr.operand1, instr.operand1, instr.operand2, registers[instr.operand1]);
+            case OP_SUB:
+                perform_sub(current_command.firstOperand, current_command.secondOperand);
                 break;
-            case HALT:
-                printf("HALT: Stopping execution\n");
-                running = 0;
-                break;
-            default:
-                printf("Unknown instruction!\n");
+            case OP_HALT:
+                perform_halt();
                 running = 0;
                 break;
         }
-
         program_counter++;
-
-        printf("After execution of instruction at PC = %d\n", program_counter - 1);
-        printf("Registers: R0 = %d, R1 = %d\n", registers[0], registers[1]);
-        printf("Memory: ");
-        for (int i = 0; i < MEMORY_SIZE; i++) {
-            printf("%d ", memory[i]);
-        }
-        printf("\n\n");
     }
 }
 
-void sample_program1() {
-    printf("Executing Sample Program 1\n");
+// Example program 1: Load, Add, Store, and Halt
+void example_program1() {
+    printf("Executing Example Program 1\n");
 
-    Instruction program[] = {
-        {LOAD, 0, 0},   
-        {LOAD, 1, 1},  
-        {ADD, 0, 1},   
-        {STORE, 2, 0}, 
-        {HALT, 0, 0}  
+    Command program[] = {
+        {OP_LOAD, 0, 0},   // LOAD R0, memory[0]
+        {OP_LOAD, 1, 1},   // LOAD R1, memory[1]
+        {OP_ADD, 0, 1},    // ADD R0, R1 (R0 = R0 + R1)
+        {OP_STORE, 2, 0},  // STORE memory[2], R0
+        {OP_HALT, 0, 0}    // HALT
     };
 
     memory[0] = 5;
     memory[1] = 10;
 
-    run_program(program, 5);
+    program_counter = 0; // Reset program counter
+    execute_program(program, 5);
 }
 
-void sample_program2() {
-    printf("Executing Sample Program 2\n");
+// Example program 2: Load, Subtract, Store, and Halt
+void example_program2() {
+    printf("Executing Example Program 2\n");
 
-    Instruction program[] = {
-        {LOAD, 0, 2},  
-        {LOAD, 1, 3},  
-        {SUB, 0, 1},    
-        {STORE, 4, 0}, 
-        {HALT, 0, 0}    
+    Command program[] = {
+        {OP_LOAD, 0, 2},   // LOAD R0, memory[2]
+        {OP_LOAD, 1, 3},   // LOAD R1, memory[3]
+        {OP_SUB, 0, 1},    // SUB R0, R1 (R0 = R0 - R1)
+        {OP_STORE, 4, 0},  // STORE memory[4], R0
+        {OP_HALT, 0, 0}    // HALT
     };
 
     memory[2] = 20;
     memory[3] = 7;
 
-    run_program(program, 5);
+    program_counter = 0; // Reset program counter
+    execute_program(program, 5);
 }
