@@ -1,6 +1,5 @@
 #include <stdio.h>
 
-// Enum to represent different opcodes
 enum OpCode {
     LOAD,    // Load value from memory to register
     STORE,   // Store value from register to memory
@@ -25,6 +24,22 @@ int registers[REGISTER_COUNT] = {0};  // Registers
 int program_counter = 0; // Program Counter
 
 // Function to simulate the fetch-decode-execute cycle
+void run_program(Instruction program[], int program_size);
+
+// Sample program 1: Load, Add, Store, and Halt
+void sample_program1();
+
+// Sample program 2: Load, Subtract, Store, and Halt
+void sample_program2();
+
+int main() {
+    // Run sample programs
+    sample_program1();
+    sample_program2();
+
+    return 0;
+}
+
 void run_program(Instruction program[], int program_size) {
     int running = 1;
 
@@ -88,7 +103,6 @@ void run_program(Instruction program[], int program_size) {
     }
 }
 
-// Sample program 1: Load, Add, Store, and Halt
 void sample_program1() {
     printf("Executing Sample Program 1\n");
 
@@ -106,7 +120,6 @@ void sample_program1() {
     run_program(program, 5);
 }
 
-// Sample program 2: Load, Subtract, Store, and Halt
 void sample_program2() {
     printf("Executing Sample Program 2\n");
 
@@ -122,12 +135,4 @@ void sample_program2() {
     memory[3] = 7;
 
     run_program(program, 5);
-}
-
-int main() {
-    // Run sample programs
-    sample_program1();
-    sample_program2();
-
-    return 0;
 }
