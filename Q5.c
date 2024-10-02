@@ -15,12 +15,24 @@ void print_left(int n) {
 // Function to print inverted full triangle
 void print_inverted_full(int n) {
    for (int i = n; i >= 1; i--) {
-        for (int j = n; j > i; j--) {
-            printf("  "); // Space for alignment
+        // Print left half
+        for (int j = 1; j <= n; j++) {
+            if (j <= i) {
+                printf("* ");
+            } else {
+                printf("  ");
+            }
         }
-        for (int k = 1; k <= i; k++) {
-            printf("* ");
+        
+        // Print right half
+        for (int j = n; j >= 1; j--) {
+            if (j <= i) {
+                printf("* ");
+            } else {
+                printf("  ");
+            }
         }
+        
         printf("\n");
     }
 }
