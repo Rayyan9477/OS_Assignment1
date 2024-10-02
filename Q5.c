@@ -2,53 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Function to print left-aligned triangle
-void print_left(int n) {
-    for (int i = 1; i <= n; i++) {
-        for (int j = 1; j <= i; j++) {
-            printf("* ");
-        }
-        printf("\n");
-    }
-}
-
-// Function to print inverted full triangle
-void print_inverted_full(int n) {
-   for (int i = n; i >= 1; i--) {
-        // Print left half
-        for (int j = 1; j <= n; j++) {
-            if (j <= i) {
-                printf("* ");
-            } else {
-                printf("  ");
-            }
-        }
-        
-        // Print right half
-        for (int j = n; j >= 1; j--) {
-            if (j <= i) {
-                printf("* ");
-            } else {
-                printf("  ");
-            }
-        }
-        
-        printf("\n");
-    }
-}
-
-// Function to print right-aligned triangle
-void print_right(int n) {
-    for (int i = 1; i <= n; i++) {
-        for (int j = i; j < n; j++) {
-            printf("  "); // Space for alignment
-        }
-        for (int k = 1; k <= i; k++) {
-            printf("* ");
-        }
-        printf("\n");
-    }
-}
+void print_left(int n);
+void print_inverted_full(int n);
+void print_right(int n);
 
 int main(int argc, char *argv[]) {
     if (argc != 3) {
@@ -77,4 +33,47 @@ int main(int argc, char *argv[]) {
     }
 
     return 0;
+}
+
+void print_left(int n) {
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= i; j++) {
+            printf("* ");
+        }
+        printf("\n");
+    }
+}
+
+void print_inverted_full(int n) {
+   for (int i = n; i >= 1; i--) {
+        for (int j = 1; j <= n; j++) {
+            if (j <= i) {
+                printf("* ");
+            } else {
+                printf("  ");
+            }
+        }
+        
+        for (int j = n; j >= 1; j--) {
+            if (j <= i) {
+                printf("* ");
+            } else {
+                printf("  ");
+            }
+        }
+        
+        printf("\n");
+    }
+}
+
+void print_right(int n) {
+    for (int i = 1; i <= n; i++) {
+        for (int j = i; j < n; j++) {
+            printf("  ");
+        }
+        for (int k = 1; k <= i; k++) {
+            printf("* ");
+        }
+        printf("\n");
+    }
 }

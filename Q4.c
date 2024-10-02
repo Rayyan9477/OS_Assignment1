@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <stdlib.h>
-#include <string.h>  // Added for strcpy
+#include <string.h>  
 
 void create_process(const char* name, int level);
 
@@ -19,10 +19,9 @@ void create_process(const char* name, int level) {
         perror("Fork failed");
         exit(1);
     } else if (pid == 0) {
-        // Child process
         printf("Process %s (PID: %d, Parent PID: %d)\n", name, getpid(), getppid());
         
-        if (level < 4) {  // We don't create children for level 4 (leaf nodes)
+        if (level < 4) {  
             if (level == 0) {
                 create_process("m", level + 1);
                 create_process("C2", level + 1);
@@ -60,7 +59,6 @@ void create_process(const char* name, int level) {
         }
         exit(0);
     } else {
-        // Parent process
-        wait(NULL);  // Wait for the child to terminate
+        wait(NULL);  
     }
 }

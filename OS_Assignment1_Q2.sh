@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Display name and roll number on script start
 echo "22I—2489-Rayyan-Ahmed"
 
 # Function to create a new user and assign admin privileges
