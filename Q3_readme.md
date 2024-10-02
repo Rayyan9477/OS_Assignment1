@@ -96,6 +96,4 @@ Each instruction (or command) has an operation code and two numbers:
 1. **Fetch:** The program counter fetches (gets) the next command.
 2. **Decode:** The program reads the command and decides what to do.
 3. **Execute:** The program performs the operation, like loading or adding values.
-
-## Conclusion
-This program shows how a simple processor can execute basic operations. It demonstrates key concepts like how to load and store data, perform addition and subtraction, and halt the program.
+4. **Store:** The result is stored in memory or a register.

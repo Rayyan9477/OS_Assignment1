@@ -44,7 +44,7 @@ rotate_logs() {
     fi
 }
 
-# Main script execution with error handling
+# Main script 
 {
     echo "$(date): Server monitoring started."
     check_disk_usage || echo "$(date): Error checking disk usage." >> $LOG_FILE
@@ -53,3 +53,5 @@ rotate_logs() {
     rotate_logs || echo "$(date): Error rotating logs." >> $LOG_FILE
     echo "$(date): Server monitoring completed."
 } 2>> $LOG_FILE
+
+# To Run => ./server_mointer.sh
