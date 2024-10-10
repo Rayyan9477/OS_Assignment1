@@ -4,12 +4,12 @@ echo "22I—2489-Rayyan-Ahmed"
 
 # Function to create a new user and assign admin privileges
 create_user() {
-    echo "Enter user: OS_Assignment1"
-    echo "Enter password: 12345"
+    echo "Enter user: OS_Assignment"
+    echo "Enter password: 1234"
     
     # Create the user with specified username and password
     sudo useradd -m -s /bin/bash OS_Assignment_1
-    echo "OS_Assignment_1:12345" | sudo chpasswd
+    echo "OS_Assignment_1:1234" | sudo chpasswd
     
     # Add the user to the sudo group (granting admin privileges)
     sudo usermod -aG sudo OS_Assignment_1

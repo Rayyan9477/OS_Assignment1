@@ -6,3 +6,7 @@ Wed Oct  2 18:14:16 UTC 2024: Disk usage is at 41%, which is within the limit.
 Wed Oct  2 18:14:17 UTC 2024: CPU usage is at 0%, which is within the limit.
 Wed Oct  2 18:14:17 UTC 2024: Memory usage is at 21.3236%, which is within the limit.
 Wed Oct  2 18:14:17 UTC 2024: Log file size is within the limit.
+Tue Oct  8 11:21:03 UTC 2024: Disk usage is at 41%, which is within the limit.
+Tue Oct  8 11:21:03 UTC 2024: CPU usage is at 86.7%, which exceeds the threshold.
+Tue Oct  8 11:21:03 UTC 2024: Memory usage is at 21.7405%, which is within the limit.
+Tue Oct  8 11:21:03 UTC 2024: Log file size is within the limit.
