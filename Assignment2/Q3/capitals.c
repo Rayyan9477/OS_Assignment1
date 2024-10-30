@@ -8,6 +8,14 @@
 
 #define MAX_BUF 1024
 
+void display_instructions() {
+    printf("Capital Letters Counting Program\n");
+    printf("This program counts the number of capital letters in a given string.\n");
+    printf("Instructions:\n");
+    printf("1. Ensure the named pipe 'capital_pipe' exists.\n");
+    printf("2. The program will read strings from the named pipe and count the capital letters.\n");
+}
+
 int count_capitals(const char *str) {
     int count = 0;
     for (int i = 0; str[i]; i++) {
@@ -21,6 +29,8 @@ int count_capitals(const char *str) {
 int main() {
     int fd;
     char buf[MAX_BUF];
+    
+    display_instructions();
     
     // Open named pipe
     fd = open("capital_pipe", O_RDONLY);

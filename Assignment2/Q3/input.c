@@ -8,6 +8,15 @@
 
 #define MAX_BUF 1024
 
+void display_instructions() {
+    printf("Input Program\n");
+    printf("This program takes input from the user and passes it to other programs via named pipes.\n");
+    printf("Instructions:\n");
+    printf("1. Enter a string when prompted.\n");
+    printf("2. The string will be sent to other programs for processing.\n");
+    printf("3. Type 'exit' to quit the program.\n");
+}
+
 int main() {
     int fd_vowels, fd_reverse, fd_capitals;
     char input[MAX_BUF];
@@ -17,6 +26,7 @@ int main() {
     mkfifo("reverse_pipe", 0666);
     mkfifo("capital_pipe", 0666);
     
+    display_instructions();
     printf("Enter text (type 'exit' to quit):\n");
     
     while (1) {

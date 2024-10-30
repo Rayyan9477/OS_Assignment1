@@ -12,8 +12,8 @@ void display_instructions() {
     printf("Vowel Counting Program\n");
     printf("This program counts the number of vowels in a given string.\n");
     printf("Instructions:\n");
-    printf("1. Enter a string when prompted.\n");
-    printf("2. The program will display the number of vowels in the entered string.\n");
+    printf("1. Ensure the named pipe 'vowel_pipe' exists.\n");
+    printf("2. The program will read strings from the named pipe and count the vowels.\n");
 }
 
 int count_vowels(const char *str) {
@@ -28,20 +28,31 @@ int count_vowels(const char *str) {
 }
 
 int main() {
-    char buffer[MAX_BUF];
-
+    int fd;
+    char buf[MAX_BUF];
+    
     display_instructions();
-
-    printf("Please enter a string: ");
-    if (fgets(buffer, MAX_BUF, stdin) != NULL) {
-        // Remove newline character if present
-        buffer[strcspn(buffer, "\n")] = '\0';
-
-        int vowel_count = count_vowels(buffer);
-        printf("The number of vowels in the entered string is: %d\n", vowel_count);
-    } else {
-        printf("Error reading input.\n");
+    
+    // Open named pipe
+    fd = open("vowel_pipe", O_RDONLY);
+    
+    while (1) {
+        // Clear buffer
+        memset(buf, 0, MAX_BUF);
+        
+        // Read from pipe
+        int bytes_read = read(fd, buf, MAX_BUF);
+        if (bytes_read <= 0) {
+            close(fd);
+            fd = open("vowel_pipe", O_RDONLY);
+            continue;
+        }
+        
+        // Process and display result
+        int vowel_count = count_vowels(buf);
+        printf("The number of vowels in the entered string is: %d   in the string: %s\n" , vowel_count, buf);
     }
-
+    
+    close(fd);
     return 0;
 }
