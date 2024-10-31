@@ -14,6 +14,7 @@ void *find_max(void *arg) {
     return max_value; 
 }
 
+// Main program
 int main() {
     pthread_t thread;
     int array[5] = {1, 2, 3, 4, 5};
