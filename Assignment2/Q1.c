@@ -29,6 +29,39 @@ Queue queues[MAX_QUEUES];
 Process processes[MAX_PROCESSES];
 int num_processes = 0;
 
+void initialize_queues(int num_queues, char* algorithms[], int quantums[]);
+void enqueue_process(Queue* queue, Process* process);
+Process* dequeue_process(Queue* queue);
+void add_to_completed(Queue* queue, Process* process);
+void preempt_process(Process** current_process, Process* new_process);
+void read_processes_from_file(const char* filename);
+void calculate_times(Process* process, int current_time);
+void print_results(int num_queues);
+void schedule_processes(int num_queues);
+
+// Main Program
+int main() {
+    int num_queues;
+    printf("How many algorithms do you want to implement? ");
+    scanf("%d", &num_queues);
+
+    if (num_queues > MAX_QUEUES) {
+        printf("Error: Maximum number of queues is %d\n", MAX_QUEUES);
+        return 1;
+    }
+
+    char* algorithms[] = {"Priority Scheduling", "Round Robin (Quantum=8)", "Round Robin (Quantum=10)", "FCFS"};
+    int quantums[] = {0, 8, 10, 0};
+
+    initialize_queues(num_queues, algorithms, quantums);
+    read_processes_from_file("processes.txt");
+    schedule_processes(num_queues);
+    print_results(num_queues);
+
+    return 0;
+}
+
+// Function definitions
 void initialize_queues(int num_queues, char* algorithms[], int quantums[]) {
     for (int i = 0; i < num_queues; i++) {
         queues[i].front = NULL;
@@ -182,25 +215,4 @@ void schedule_processes(int num_queues) {
 
         current_time++;
     }
-}
-
-int main() {
-    int num_queues;
-    printf("How many algorithms do you want to implement? ");
-    scanf("%d", &num_queues);
-
-    if (num_queues > MAX_QUEUES) {
-        printf("Error: Maximum number of queues is %d\n", MAX_QUEUES);
-        return 1;
-    }
-
-    char* algorithms[] = {"Priority Scheduling", "Round Robin (Quantum=8)", "Round Robin (Quantum=10)", "FCFS"};
-    int quantums[] = {0, 8, 10, 0};
-
-    initialize_queues(num_queues, algorithms, quantums);
-    read_processes_from_file("processes.txt");
-    schedule_processes(num_queues);
-    print_results(num_queues);
-
-    return 0;
 }
