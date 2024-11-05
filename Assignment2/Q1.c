@@ -5,11 +5,7 @@
 #define MAX_PROCESSES 100
 #define MAX_QUEUES 4
 
-// Forward declarations
-typedef struct Process Process;
-typedef struct Queue Queue;
-
-struct Process {
+typedef struct Process {
     int pid;
     int arrival_time;
     int burst_time;
@@ -17,160 +13,175 @@ struct Process {
     int remaining_time;
     int waiting_time;
     int turnaround_time;
-};
+    struct Process* next;
+} Process;
 
-Queue* createQueue(const char* algorithm, int quantum);
-void enqueue(Queue* q, Process* p);
-Process* dequeue(Queue* q);
-void priorityScheduling(Queue* q);
-void roundRobin(Queue* q);
-void fcfs(Queue* q);
-void readProcessesFromFile(const char* filename, Process processes[], int* process_count);
-void readProcessesManually(Process processes[], int* process_count);
-void printResults(Queue* q);
-
-
-struct Queue {
-    Process* processes[MAX_PROCESSES];
-    int front, rear;
-    int size;
-    char algorithm[50];
+typedef struct Queue {
+    Process* front;
+    Process* rear;
+    Process* completed;
+    int count;
+    char* algorithm;
     int quantum;
-};
+} Queue;
 
-Queue* createQueue(const char* algorithm, int quantum) {
-    Queue* q = (Queue*)malloc(sizeof(Queue));
-    q->front = q->rear = -1;
-    q->size = 0;
-    strcpy(q->algorithm, algorithm);
-    q->quantum = quantum;
-    return q;
-}
+Queue queues[MAX_QUEUES];
+Process processes[MAX_PROCESSES];
+int num_processes = 0;
 
-void enqueue(Queue* q, Process* p) {
-    if (q->rear == MAX_PROCESSES - 1) return;
-    if (q->front == -1) q->front = 0;
-    q->rear++;
-    q->processes[q->rear] = p;
-    q->size++;
-}
-
-Process* dequeue(Queue* q) {
-    if (q->front == -1) return NULL;
-    Process* p = q->processes[q->front];
-    q->front++;
-    if (q->front > q->rear) q->front = q->rear = -1;
-    q->size--;
-    return p;
-}
-
-int compare_priority(const void* a, const void* b) {
-    return (*(Process**)b)->priority - (*(Process**)a)->priority;
-}
-
-void priorityScheduling(Queue* q) {
-    int current_time = 0;
-    qsort(q->processes, q->size, sizeof(Process*), compare_priority);
-
-    for (int i = 0; i < q->size; i++) {
-        Process* p = q->processes[i];
-        p->waiting_time = current_time - p->arrival_time;
-        current_time += p->burst_time;
-        p->turnaround_time = current_time - p->arrival_time;
-        p->remaining_time = 0;
+void initialize_queues(int num_queues, char* algorithms[], int quantums[]) {
+    for (int i = 0; i < num_queues; i++) {
+        queues[i].front = NULL;
+        queues[i].rear = NULL;
+        queues[i].completed = NULL;
+        queues[i].count = 0;
+        queues[i].algorithm = algorithms[i];
+        queues[i].quantum = quantums[i];
     }
 }
 
-void roundRobin(Queue* q) {
-    int current_time = 0;
-    int completed = 0;
-    while (completed < q->size) {
-        for (int i = 0; i < q->size; i++) {
-            Process* p = q->processes[i];
-            if (p->remaining_time > 0) {
-                if (p->remaining_time > q->quantum) {
-                    current_time += q->quantum;
-                    p->remaining_time -= q->quantum;
-                } else {
-                    current_time += p->remaining_time;
-                    p->waiting_time = current_time - p->arrival_time - p->burst_time;
-                    p->turnaround_time = current_time - p->arrival_time;
-                    p->remaining_time = 0;
-                    completed++;
-                }
-            }
-        }
+void enqueue_process(Queue* queue, Process* process) {
+    process->next = NULL;
+    if (queue->rear == NULL) {
+        queue->front = process;
+        queue->rear = process;
+    } else {
+        queue->rear->next = process;
+        queue->rear = process;
     }
+    queue->count++;
 }
 
-void fcfs(Queue* q) {
-    int current_time = 0;
-    for (int i = 0; i < q->size; i++) {
-        Process* p = q->processes[i];
-        p->waiting_time = current_time - p->arrival_time;
-        current_time += p->burst_time;
-        p->turnaround_time = current_time - p->arrival_time;
-        p->remaining_time = 0;
+Process* dequeue_process(Queue* queue) {
+    if (queue->front == NULL) {
+        return NULL;
     }
+    Process* process = queue->front;
+    queue->front = queue->front->next;
+    if (queue->front == NULL) {
+        queue->rear = NULL;
+    }
+    queue->count--;
+    return process;
 }
 
-void readProcessesFromFile(const char* filename, Process processes[], int* process_count) {
+void add_to_completed(Queue* queue, Process* process) {
+    process->next = queue->completed;
+    queue->completed = process;
+}
+
+void preempt_process(Process** current_process, Process* new_process) {
+    enqueue_process(&queues[(*current_process)->priority], *current_process);
+    *current_process = new_process;
+}
+
+void read_processes_from_file(const char* filename) {
     FILE* file = fopen(filename, "r");
     if (file == NULL) {
-        printf("Error opening file %s. Would you like to enter processes manually? (y/n): ", filename);
-        char response;
-        scanf(" %c", &response);
-        if (response == 'y' || response == 'Y') {
-            readProcessesManually(processes, process_count);
-        } else {
-            exit(1);
-        }
-        return;
+        perror("Error opening file");
+        exit(EXIT_FAILURE);
     }
 
-    *process_count = 0;
-    while (fscanf(file, "%d %d %d %d", &processes[*process_count].pid, 
-                  &processes[*process_count].arrival_time, 
-                  &processes[*process_count].burst_time, 
-                  &processes[*process_count].priority) == 4) {
-        processes[*process_count].remaining_time = processes[*process_count].burst_time;
-        processes[*process_count].waiting_time = 0;
-        processes[*process_count].turnaround_time = 0;
-        (*process_count)++;
+    while (fscanf(file, "%d %d %d %d", &processes[num_processes].pid, &processes[num_processes].arrival_time,
+                  &processes[num_processes].burst_time, &processes[num_processes].priority) != EOF) {
+        processes[num_processes].remaining_time = processes[num_processes].burst_time;
+        processes[num_processes].waiting_time = 0;
+        processes[num_processes].turnaround_time = 0;
+        num_processes++;
     }
 
     fclose(file);
 }
 
-void readProcessesManually(Process processes[], int* process_count) {
-    printf("Enter the number of processes: ");
-    scanf("%d", process_count);
+void calculate_times(Process* process, int current_time) {
+    process->turnaround_time = current_time - process->arrival_time;
+    process->waiting_time = process->turnaround_time - process->burst_time;
+}
 
-    for (int i = 0; i < *process_count; i++) {
-        printf("Enter details for process %d (PID Arrival_Time Burst_Time Priority): ", i + 1);
-        scanf("%d %d %d %d", &processes[i].pid, &processes[i].arrival_time, 
-              &processes[i].burst_time, &processes[i].priority);
-        processes[i].remaining_time = processes[i].burst_time;
-        processes[i].waiting_time = 0;
-        processes[i].turnaround_time = 0;
+void print_results(int num_queues) {
+    for (int i = 0; i < num_queues; i++) {
+        printf("\nQueue %d (%s):\n", i + 1, queues[i].algorithm);
+        Process* process = queues[i].completed;
+        int total_waiting_time = 0;
+        int total_turnaround_time = 0;
+        int count = 0;
+
+        while (process != NULL) {
+            printf("PID: %d, Arrival Time: %d, Burst Time: %d, Waiting Time: %d, Turnaround Time: %d\n",
+                   process->pid, process->arrival_time, process->burst_time, process->waiting_time, process->turnaround_time);
+            total_waiting_time += process->waiting_time;
+            total_turnaround_time += process->turnaround_time;
+            count++;
+            process = process->next;
+        }
+
+        if (count > 0) {
+            printf("Average Waiting Time: %.2f\n", (float)total_waiting_time / count);
+            printf("Average Turnaround Time: %.2f\n", (float)total_turnaround_time / count);
+        }
+        printf("\n");
     }
 }
 
-void printResults(Queue* q) {
-    printf("\nResults for %s:\n", q->algorithm);
-    printf("PID\tArrival Time\tBurst Time\tWaiting Time\tTurnaround Time\n");
-    
-    float total_waiting_time = 0, total_turnaround_time = 0;
+void schedule_processes(int num_queues) {
+    Process* current_process = NULL;
+    int current_time = 0;
+    int quantum_counter = 0;
 
-    for (int i = 0; i < q->size; i++) {
-        Process* p = q->processes[i];
-        printf("%d\t%d\t\t%d\t\t%d\t\t%d\n", p->pid, p->arrival_time, p->burst_time, p->waiting_time, p->turnaround_time);
-        total_waiting_time += p->waiting_time;
-        total_turnaround_time += p->turnaround_time;
+    while (1) {
+        int all_done = 1;
+
+        for (int i = 0; i < num_processes; i++) {
+            if (processes[i].arrival_time == current_time) {
+                enqueue_process(&queues[processes[i].priority], &processes[i]);
+                printf("Process %d arrived and enqueued in queue %d\n", processes[i].pid, processes[i].priority);
+            }
+        }
+
+        for (int i = 0; i < num_queues; i++) {
+            if (queues[i].count > 0) {
+                if (current_process == NULL || current_process->priority > i) {
+                    if (current_process != NULL) {
+                        preempt_process(&current_process, dequeue_process(&queues[i]));
+                    } else {
+                        current_process = dequeue_process(&queues[i]);
+                    }
+                    quantum_counter = 0;
+                    break;
+                }
+            }
+        }
+
+        if (current_process != NULL) {
+            current_process->remaining_time--;
+            quantum_counter++;
+
+            if (current_process->remaining_time == 0) {
+                calculate_times(current_process, current_time + 1);
+                add_to_completed(&queues[current_process->priority], current_process);
+                printf("Process %d completed\n", current_process->pid);
+                current_process = NULL;
+            } else if (strcmp(queues[current_process->priority].algorithm, "Round Robin") == 0 &&
+                       quantum_counter == queues[current_process->priority].quantum) {
+                enqueue_process(&queues[current_process->priority], current_process);
+                printf("Process %d quantum expired and re-enqueued in queue %d\n", current_process->pid, current_process->priority);
+                current_process = NULL;
+            }
+        }
+
+        for (int i = 0; i < num_processes; i++) {
+            if (processes[i].remaining_time > 0) {
+                all_done = 0;
+                break;
+            }
+        }
+
+        if (all_done) {
+            break;
+        }
+
+        current_time++;
     }
-
-    printf("Average Waiting Time: %.2f\n", total_waiting_time / q->size);
-    printf("Average Turnaround Time: %.2f\n", total_turnaround_time / q->size);
 }
 
 int main() {
@@ -183,50 +194,13 @@ int main() {
         return 1;
     }
 
-    Queue* queues[MAX_QUEUES];
     char* algorithms[] = {"Priority Scheduling", "Round Robin (Quantum=8)", "Round Robin (Quantum=10)", "FCFS"};
     int quantums[] = {0, 8, 10, 0};
 
-    for (int i = 0; i < num_queues; i++) {
-        queues[i] = createQueue(algorithms[i], quantums[i]);
-    }
-
-    Process processes[MAX_PROCESSES];
-    int process_count;
-    readProcessesFromFile("processes.txt", processes, &process_count);
-
-    // Distribute processes to queues
-    for (int i = 0; i < process_count; i++) {
-        enqueue(queues[0], &processes[i]);
-    }
-
-    // Process queues
-    for (int i = 0; i < num_queues; i++) {
-        if (strcmp(queues[i]->algorithm, "Priority Scheduling") == 0) {
-            priorityScheduling(queues[i]);
-        } else if (strstr(queues[i]->algorithm, "Round Robin") != NULL) {
-            roundRobin(queues[i]);
-        } else if (strcmp(queues[i]->algorithm, "FCFS") == 0) {
-            fcfs(queues[i]);
-        }
-
-        printResults(queues[i]);
-
-        // Move remaining processes to next queue
-        if (i < num_queues - 1) {
-            for (int j = 0; j < queues[i]->size; j++) {
-                Process* p = queues[i]->processes[j];
-                if (p->remaining_time > 0) {
-                    enqueue(queues[i+1], p);
-                }
-            }
-        }
-    }
-
-    // Free allocated memory
-    for (int i = 0; i < num_queues; i++) {
-        free(queues[i]);
-    }
+    initialize_queues(num_queues, algorithms, quantums);
+    read_processes_from_file("processes.txt");
+    schedule_processes(num_queues);
+    print_results(num_queues);
 
     return 0;
 }
