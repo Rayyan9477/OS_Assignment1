@@ -32,14 +32,11 @@ int main() {
     
     display_instructions();
     
-    // Open named pipe
     fd = open("capital_pipe", O_RDONLY);
     
     while (1) {
-        // Clear buffer
         memset(buf, 0, MAX_BUF);
         
-        // Read from pipe
         int bytes_read = read(fd, buf, MAX_BUF);
         if (bytes_read <= 0) {
             close(fd);
@@ -47,7 +44,6 @@ int main() {
             continue;
         }
         
-        // Process and display result
         int capital_count = count_capitals(buf);
         printf("Number of capital letters: %d in text: %s\n", capital_count, buf);
     }

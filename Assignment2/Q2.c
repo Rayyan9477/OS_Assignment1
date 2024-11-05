@@ -9,6 +9,13 @@
 #define WRITE_END 1
 #define MAX_BUF 1024
 
+int create_process_chain(int process_num, int total_processes);
+
+int main() {
+    create_process_chain(0, 6);  // Create chain of 6 processes (P1 + C1-C5)
+    return 0;
+}
+
 int create_process_chain(int process_num, int total_processes) {
     if (process_num >= total_processes) {
         return 0;
@@ -17,7 +24,6 @@ int create_process_chain(int process_num, int total_processes) {
     int pipe_to_next[2];
     int pipe_from_last[2];
     
-    // Create pipes
     if (pipe(pipe_to_next) == -1) {
         perror("Pipe creation failed");
         exit(1);
@@ -36,11 +42,10 @@ int create_process_chain(int process_num, int total_processes) {
         exit(1);
     }
     
-    if (pid == 0) { // Child process
-        // Close unused pipe ends
+    if (pid == 0) { 
         if (process_num > 0) {
             close(STDIN_FILENO);
-            dup2(3, STDIN_FILENO);  // Previous pipe becomes stdin
+            dup2(3, STDIN_FILENO); 
             close(3);
         }
         
@@ -55,7 +60,7 @@ int create_process_chain(int process_num, int total_processes) {
                 exit(0);
             }
             
-            buffer[strcspn(buffer, "\n")] = 0;  // Remove newline
+            buffer[strcspn(buffer, "\n")] = 0;  
             
             if (strcmp(buffer, "Quit") == 0) {
                 printf("Quit\n");
@@ -67,12 +72,12 @@ int create_process_chain(int process_num, int total_processes) {
             fflush(stdout);
         }
         
-    } else { // Parent process
+    } else { 
         if (process_num > 0) {
-            close(3);  // Close the previous pipe
+            close(3); 
         }
         
-        if (process_num == 0) { // P1 process
+        if (process_num == 0) { 
             close(pipe_to_next[WRITE_END]);
             
             char input[MAX_BUF];
@@ -94,12 +99,10 @@ int create_process_chain(int process_num, int total_processes) {
                 printf("%s:%d\n", input, getpid());
                 fflush(stdout);
                 
-                // Send to next process
                 char msg[MAX_BUF];
                 sprintf(msg, "%s:%d\n", input, getpid());
                 write(4, msg, strlen(msg));  // Write to next process
                 
-                // Read final result
                 char result[MAX_BUF];
                 FILE* fp = fdopen(pipe_to_next[READ_END], "r");
                 if (fgets(result, MAX_BUF, fp) != NULL) {
@@ -108,18 +111,12 @@ int create_process_chain(int process_num, int total_processes) {
                 }
             }
         } else {
-            dup2(pipe_to_next[READ_END], 3);  // Save pipe for next child
+            dup2(pipe_to_next[READ_END], 3);  
             close(pipe_to_next[READ_END]);
             close(pipe_to_next[WRITE_END]);
         }
         
-        // Create next process in chain
         return create_process_chain(process_num + 1, total_processes);
     }
-    return 0;
-}
-
-int main() {
-    create_process_chain(0, 6);  // Create chain of 6 processes (P1 + C1-C5)
     return 0;
 }

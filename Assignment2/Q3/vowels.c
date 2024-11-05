@@ -33,14 +33,11 @@ int main() {
     
     display_instructions();
     
-    // Open named pipe
     fd = open("vowel_pipe", O_RDONLY);
     
     while (1) {
-        // Clear buffer
         memset(buf, 0, MAX_BUF);
         
-        // Read from pipe
         int bytes_read = read(fd, buf, MAX_BUF);
         if (bytes_read <= 0) {
             close(fd);
@@ -48,7 +45,6 @@ int main() {
             continue;
         }
         
-        // Process and display result
         int vowel_count = count_vowels(buf);
         printf("The number of vowels in the entered string is: %d   in the string: %s\n" , vowel_count, buf);
     }

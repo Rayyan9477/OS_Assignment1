@@ -31,15 +31,12 @@ int main() {
     
     display_instructions();
     
-    // Open named pipe
     fd = open("reverse_pipe", O_RDONLY);
     
     while (1) {
-        // Clear buffers
         memset(buf, 0, MAX_BUF);
         memset(reversed, 0, MAX_BUF);
         
-        // Read from pipe
         int bytes_read = read(fd, buf, MAX_BUF);
         if (bytes_read <= 0) {
             close(fd);
@@ -47,7 +44,6 @@ int main() {
             continue;
         }
         
-        // Process and display result
         strcpy(reversed, buf);
         reverse_string(reversed);
         printf("Reversed string: %s\n", reversed);

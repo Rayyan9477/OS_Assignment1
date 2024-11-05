@@ -32,13 +32,12 @@ int main() {
     while (1) {
         // Get input from user
         fgets(input, MAX_BUF, stdin);
-        input[strcspn(input, "\n")] = 0;  // Remove newline
+        input[strcspn(input, "\n")] = 0;  
         
         if (strcmp(input, "exit") == 0) {
             break;
         }
         
-        // Open pipes and write data
         fd_vowels = open("vowel_pipe", O_WRONLY);
         fd_reverse = open("reverse_pipe", O_WRONLY);
         fd_capitals = open("capital_pipe", O_WRONLY);
@@ -52,7 +51,6 @@ int main() {
         close(fd_capitals);
     }
     
-    // Clean up pipes
     unlink("vowel_pipe");
     unlink("reverse_pipe");
     unlink("capital_pipe");
