@@ -50,8 +50,16 @@ int main() {
         return 1;
     }
 
-    char* algorithms[] = {"Priority Scheduling", "Round Robin (Quantum=8)", "Round Robin (Quantum=10)", "FCFS"};
-    int quantums[] = {0, 8, 10, 0};
+    char* algorithms[MAX_QUEUES] = {"Priority Scheduling", "Round Robin (Quantum=8)", "Round Robin (Quantum=10)", "FCFS"};
+    int quantums[MAX_QUEUES] = {0, 8, 10, 0};
+
+    // Adjust the arrays based on the number of queues
+    if (num_queues < MAX_QUEUES) {
+        for (int i = num_queues; i < MAX_QUEUES; i++) {
+            algorithms[i] = NULL;
+            quantums[i] = 0;
+        }
+    }
 
     initialize_queues(num_queues, algorithms, quantums);
     read_processes_from_file("processes.txt");
@@ -166,14 +174,15 @@ void schedule_processes(int num_queues) {
 
         for (int i = 0; i < num_processes; i++) {
             if (processes[i].arrival_time == current_time) {
-                enqueue_process(&queues[processes[i].priority], &processes[i]);
-                printf("Process %d arrived and enqueued in queue %d\n", processes[i].pid, processes[i].priority);
+                int queue_index = processes[i].priority % num_queues;
+                enqueue_process(&queues[queue_index], &processes[i]);
+                printf("Process %d arrived and enqueued in queue %d\n", processes[i].pid, queue_index);
             }
         }
 
         for (int i = 0; i < num_queues; i++) {
             if (queues[i].count > 0) {
-                if (current_process == NULL || current_process->priority > i) {
+                if (current_process == NULL || current_process->priority % num_queues > i) {
                     if (current_process != NULL) {
                         preempt_process(&current_process, dequeue_process(&queues[i]));
                     } else {
@@ -191,13 +200,14 @@ void schedule_processes(int num_queues) {
 
             if (current_process->remaining_time == 0) {
                 calculate_times(current_process, current_time + 1);
-                add_to_completed(&queues[current_process->priority], current_process);
+                add_to_completed(&queues[current_process->priority % num_queues], current_process);
                 printf("Process %d completed\n", current_process->pid);
                 current_process = NULL;
-            } else if (strcmp(queues[current_process->priority].algorithm, "Round Robin") == 0 &&
-                       quantum_counter == queues[current_process->priority].quantum) {
-                enqueue_process(&queues[current_process->priority], current_process);
-                printf("Process %d quantum expired and re-enqueued in queue %d\n", current_process->pid, current_process->priority);
+            } else if (queues[current_process->priority % num_queues].algorithm != NULL &&
+                       strstr(queues[current_process->priority % num_queues].algorithm, "Round Robin") != NULL &&
+                       quantum_counter == queues[current_process->priority % num_queues].quantum) {
+                enqueue_process(&queues[current_process->priority % num_queues], current_process);
+                printf("Process %d quantum expired and re-enqueued in queue %d\n", current_process->pid, current_process->priority % num_queues);
                 current_process = NULL;
             }
         }
