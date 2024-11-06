@@ -5,118 +5,128 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#define READ_END 0
-#define WRITE_END 1
-#define MAX_BUF 1024
+#define MAX_MSG 1024
+#define PROC_COUNT 6
 
-int create_process_chain(int process_num, int total_processes);
+void create_process(int read_fd, int write_fd, int level);
 
 int main() {
-    create_process_chain(0, 6);  // Create chain of 6 processes (P1 + C1-C5)
-    return 0;
-}
+    int pipes[PROC_COUNT][2];
+    pid_t pids[PROC_COUNT-1];  // Array to store child PIDs
 
-int create_process_chain(int process_num, int total_processes) {
-    if (process_num >= total_processes) {
-        return 0;
-    }
-
-    int pipe_to_next[2];
-    int pipe_from_last[2];
-    
-    if (pipe(pipe_to_next) == -1) {
-        perror("Pipe creation failed");
-        exit(1);
-    }
-    if (process_num == total_processes - 1) {
-        if (pipe(pipe_from_last) == -1) {
-            perror("Pipe creation failed");
+    // Create pipes
+    for (int i = 0; i < PROC_COUNT; i++) {
+        if (pipe(pipes[i]) == -1) {
+            perror("pipe");
             exit(1);
         }
     }
 
-    pid_t pid = fork();
-    
-    if (pid < 0) {
-        perror("Fork failed");
-        exit(1);
-    }
-    
-    if (pid == 0) { 
-        if (process_num > 0) {
-            close(STDIN_FILENO);
-            dup2(3, STDIN_FILENO); 
-            close(3);
+    // Create child processes
+    for (int i = 0; i < PROC_COUNT-1; i++) {
+        pids[i] = fork();
+        if (pids[i] < 0) {
+            perror("fork");
+            exit(1);
         }
-        
-        close(STDOUT_FILENO);
-        dup2(pipe_to_next[WRITE_END], STDOUT_FILENO);
-        close(pipe_to_next[READ_END]);
-        close(pipe_to_next[WRITE_END]);
+        if (pids[i] == 0) {  // Child process
+            // Close all unused pipes
+            for (int j = 0; j < PROC_COUNT; j++) {
+                if (j == i) {  // Input pipe
+                    close(pipes[j][1]);
+                } else if (j == i + 1) {  // Output pipe
+                    close(pipes[j][0]);
+                } else {  // Unused pipes
+                    close(pipes[j][0]);
+                    close(pipes[j][1]);
+                }
+            }
+            
+            create_process(pipes[i][0], pipes[i+1][1], i+1);
+            exit(0);
+        }
+    }
 
-        char buffer[MAX_BUF];
-        while (1) {
-            if (fgets(buffer, MAX_BUF, stdin) == NULL) {
-                exit(0);
-            }
-            
-            buffer[strcspn(buffer, "\n")] = 0;  
-            
-            if (strcmp(buffer, "Quit") == 0) {
-                printf("Quit\n");
-                fflush(stdout);
-                exit(0);
-            }
-            
-            printf("%s:%d\n", buffer, getpid());
-            fflush(stdout);
-        }
-        
-    } else { 
-        if (process_num > 0) {
-            close(3); 
-        }
-        
-        if (process_num == 0) { 
-            close(pipe_to_next[WRITE_END]);
-            
-            char input[MAX_BUF];
-            while (1) {
-                printf("Enter message (or 'Quit' to exit): ");
-                fflush(stdout);
-                
-                if (fgets(input, MAX_BUF, stdin) == NULL) {
-                    break;
-                }
-                
-                input[strcspn(input, "\n")] = 0;  // Remove newline
-                
-                if (strcmp(input, "Quit") == 0) {
-                    printf("Quit\n");
-                    break;
-                }
-                
-                printf("%s:%d\n", input, getpid());
-                fflush(stdout);
-                
-                char msg[MAX_BUF];
-                sprintf(msg, "%s:%d\n", input, getpid());
-                write(4, msg, strlen(msg));  // Write to next process
-                
-                char result[MAX_BUF];
-                FILE* fp = fdopen(pipe_to_next[READ_END], "r");
-                if (fgets(result, MAX_BUF, fp) != NULL) {
-                    printf("%s", result);
-                    fflush(stdout);
-                }
-            }
+    // Parent process (P1)
+    // Close unused pipe ends
+    for (int i = 0; i < PROC_COUNT; i++) {
+        if (i == 0) {
+            close(pipes[i][0]);
+        } else if (i == PROC_COUNT-1) {
+            close(pipes[i][1]);
         } else {
-            dup2(pipe_to_next[READ_END], 3);  
-            close(pipe_to_next[READ_END]);
-            close(pipe_to_next[WRITE_END]);
+            close(pipes[i][0]);
+            close(pipes[i][1]);
         }
-        
-        return create_process_chain(process_num + 1, total_processes);
     }
+
+    char input[MAX_MSG];
+    while (1) {
+        printf("Enter message (Quit for exit): ");
+        fflush(stdout);
+
+        if (fgets(input, MAX_MSG, stdin) == NULL) break;
+        
+        // Remove newline
+        input[strcspn(input, "\n")] = 0;
+        
+        if (strcmp(input, "Quit") == 0) {
+            write(pipes[0][1], "Quit\n", 5);
+            break;
+        }
+
+        // Add own PID and send
+        char buffer[MAX_MSG];
+        snprintf(buffer, MAX_MSG, "%s:%d\n", input, getpid());
+        printf("%s", buffer);
+        write(pipes[0][1], buffer, strlen(buffer));
+
+        // Read final result
+        char final_buffer[MAX_MSG];
+        ssize_t n = read(pipes[PROC_COUNT-1][0], final_buffer, MAX_MSG-1);
+        if (n > 0) {
+            final_buffer[n] = '\0';
+            if (strncmp(final_buffer, "Quit", 4) != 0) {
+                printf("%s", final_buffer);
+            }
+        }
+    }
+
+    // Wait for all children to finish
+    for (int i = 0; i < PROC_COUNT-1; i++) {
+        waitpid(pids[i], NULL, 0);
+    }
+
+    // Close remaining pipes
+    close(pipes[0][1]);
+    close(pipes[PROC_COUNT-1][0]);
+
     return 0;
+}
+
+void create_process(int read_fd, int write_fd, int level) {
+    char buffer[MAX_MSG];
+    while (1) {
+        ssize_t n = read(read_fd, buffer, MAX_MSG-1);
+        if (n <= 0) break;
+        
+        buffer[n] = '\0';
+        if (strncmp(buffer, "Quit", 4) == 0) {
+            write(write_fd, "Quit\n", 5);
+            exit(0);
+        }
+
+        // Remove newline if present
+        if (buffer[n-1] == '\n') buffer[n-1] = '\0';
+
+        // Append PID
+        char new_buffer[MAX_MSG];
+        snprintf(new_buffer, MAX_MSG, "%s:%d\n", buffer, getpid());
+        
+        // Print and forward message
+        printf("%s", new_buffer);
+        fflush(stdout);
+        write(write_fd, new_buffer, strlen(new_buffer));
+    }
+    exit(0);
 }
