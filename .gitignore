@@ -50,3 +50,19 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+
+# IDE and editor files
+.vscode/
+
+# Package files
+*.tgz
+*.zip
+*.tar.gz
