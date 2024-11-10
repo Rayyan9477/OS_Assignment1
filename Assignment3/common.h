@@ -13,9 +13,9 @@
 #include <errno.h>
 #include <ctype.h>
 
-#define PIPE_A_TO_B "/tmp/pipe_a_to_b"
-#define PIPE_B_TO_A "/tmp/pipe_b_to_a"
-#define PID_FILE    "/tmp/process_a.pid"
+#define PIPE_A_TO_B "pipe_a_to_b"
+#define PIPE_B_TO_A "pipe_b_to_a"
+#define PID_FILE    "process_a.pid"
 #define MAX_MSG_SIZE 256
 #define NUM_MESSAGES 5
 

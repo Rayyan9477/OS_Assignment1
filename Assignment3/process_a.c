@@ -110,6 +110,9 @@ void* signal_waiter(void* arg) {
     pthread_exit(NULL);
 }
 
+
+// gcc -o process_a process_a.c -lpthread
+
 int main() {
     // Register signal handlers
     struct sigaction sa;
