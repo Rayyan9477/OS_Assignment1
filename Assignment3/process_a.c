@@ -1,15 +1,12 @@
-// process_a.c
 #include "common.h"
 #include <signal.h>
 
-// Global variables
 volatile sig_atomic_t signal_received = 0;
 volatile sig_atomic_t should_exit = 0;
 int fd_write = -1, fd_read = -1;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 
-// Thread control structure
 typedef struct {
     pthread_t thread;
     int active;
